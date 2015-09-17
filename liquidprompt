@@ -371,6 +371,8 @@ _lp_source_config()
     LP_COLORMAP_8=${LP_COLORMAP_8:-$CRIT_RED}
     LP_COLORMAP_9=${LP_COLORMAP_9:-$DANGER_RED}
 
+    LP_GIT_CHECK_UNTRACKED=${LP_GIT_CHECK_UNTRACKED:-1}
+
     # Debugging flags
     LP_DEBUG_TIME=${LP_DEBUG_TIME:-0}
 
@@ -750,8 +752,11 @@ _lp_git_branch_color()
 
         local end
         end="$NO_COL"
-        if LC_ALL=C \git status --porcelain 2>/dev/null | grep -Eq '^\?\?'; then
-            end="$LP_COLOR_CHANGES$LP_MARK_UNTRACKED$end"
+
+        if [[ "$LP_GIT_CHECK_UNTRACKED" == 1 ]]; then
+            if LC_ALL=C \git status --porcelain 2>/dev/null | grep -Eq '^\?\?'; then
+                end="$LP_COLOR_CHANGES$LP_MARK_UNTRACKED$end"
+            fi
         fi
 
         if [[ -n "$(\git stash list -n 1 2>/dev/null)" ]]; then
@@ -776,7 +781,7 @@ _lp_git_branch_color()
         local shortstat # only to check for uncommitted changes
         shortstat="$(LC_ALL=C \git diff --shortstat HEAD 2>/dev/null)"
 
-        if [[ -n "$shortstat" ]] ; then
+        if [[ "$LP_GIT_CHECK_UNTRACKED" == 1 && -n "$shortstat" ]] ; then
             local u_stat # shorstat of *unstaged* changes
             u_stat="$(LC_ALL=C \git diff --shortstat 2>/dev/null)"
             u_stat=${u_stat/*changed, /} # removing "n file(s) changed"
